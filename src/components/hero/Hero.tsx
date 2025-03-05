@@ -1,6 +1,75 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import type { Post, ApiResponse } from "~/types/post";
 
 export const Hero = component$(() => {
+  const featuredPost = useSignal<Post | null>(null);
+  const isLoading = useSignal(true);
+  const error = useSignal<string | null>(null);
+
+  // Fungsi untuk memformat tanggal
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  // Fungsi untuk menghitung waktu baca
+  const calculateReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const words = content.split(/\s+/).length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    return `${minutes} menit`;
+  };
+
+  // Fetch featured post dari API
+  useVisibleTask$(async () => {
+    try {
+      const response = await fetch('http://localhost:3000/posts');
+      if (!response.ok) throw new Error('Gagal mengambil data');
+      
+      const result: ApiResponse<Post[]> = await response.json();
+      if (!result.success) throw new Error(result.message);
+      
+      // Mengambil post pertama sebagai featured post
+      featuredPost.value = result.data[0] || null;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Terjadi kesalahan';
+    } finally {
+      isLoading.value = false;
+    }
+  });
+
+  if (isLoading.value) {
+    return (
+      <section class="pt-20 pb-10 bg-gray-50">
+        <div class="container mx-auto px-4">
+          <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error.value) {
+    return (
+      <section class="pt-20 pb-10 bg-gray-50">
+        <div class="container mx-auto px-4">
+          <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+            <p>{error.value}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!featuredPost.value) {
+    return null;
+  }
+
   return (
     <section class="pt-20 pb-10 bg-gray-50">
       <div class="container mx-auto px-4">
@@ -8,24 +77,19 @@ export const Hero = component$(() => {
           {/* Main News */}
           <div class="space-y-4">
             <span class="inline-block px-3 py-1 bg-red-100 text-red-600 rounded-full text-sm font-medium">
-              Breaking News
+              Berita Utama
             </span>
             <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-              Perkembangan Teknologi AI di Indonesia Semakin Pesat
+              {featuredPost.value.title}
             </h1>
             <p class="text-lg text-gray-600">
-              Artificial Intelligence telah mengubah cara kerja berbagai sektor industri di Indonesia. 
-              Para ahli memprediksi pertumbuhan yang signifikan dalam adopsi AI di tahun 2024.
+              {featuredPost.value.content}
             </p>
             <div class="flex items-center space-x-4">
-              <img
-                src="https://via.placeholder.com/40"
-                alt="Author"
-                class="w-10 h-10 rounded-full"
-              />
               <div>
-                <p class="text-sm font-medium text-gray-900">Ditulis oleh John Doe</p>
-                <p class="text-sm text-gray-500">5 Maret 2024 • 5 menit baca</p>
+                <p class="text-sm text-gray-500">
+                  {formatDate(featuredPost.value.createdAt)} • {calculateReadTime(featuredPost.value.content)} baca
+                </p>
               </div>
             </div>
           </div>
@@ -33,8 +97,8 @@ export const Hero = component$(() => {
           {/* Featured Image */}
           <div class="relative h-[400px] rounded-xl overflow-hidden shadow-lg">
             <img
-              src="https://via.placeholder.com/800x600"
-              alt="Featured News"
+              src={featuredPost.value.coverImage ? `http://localhost:3000${featuredPost.value.coverImage}` : "https://via.placeholder.com/800x600"}
+              alt={featuredPost.value.title}
               class="absolute inset-0 w-full h-full object-cover"
             />
             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
