@@ -34,20 +34,23 @@ export default component$(() => {
   });
 
   // Handle image change
-  const handleImageChange = $((event: any) => {
-    const file = event.target.files[0];
-    if (file) {
+  const handleImageChange = $((event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
       coverImage.value = file;
+      
+      // Create preview URL
       const reader = new FileReader();
-      reader.onloadend = () => {
-        imagePreview.value = reader.result as string;
+      reader.onload = (e) => {
+        imagePreview.value = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   });
 
   // Handle form submit
-  const handleSubmit = $(async (e: any) => {
+  const handleSubmit = $(async (e: Event) => {
     e.preventDefault();
     
     try {
@@ -62,16 +65,27 @@ export default component$(() => {
         ? `http://localhost:3000/posts/${editingPost.value.id}`
         : 'http://localhost:3000/posts';
       
+      console.log('Submitting form data:', {
+        title: title.value,
+        content: content.value,
+        coverImage: coverImage.value ? coverImage.value.name : 'no image'
+      });
+      
       const response = await fetch(url, {
         method: editingPost.value ? 'PUT' : 'POST',
         body: formData
       });
 
-      if (!response.ok) throw new Error('Gagal menyimpan data');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Gagal menyimpan data');
+      }
       
       // Refresh posts
       const refreshResponse = await fetch('http://localhost:3000/posts');
       const result: ApiResponse<Post[]> = await refreshResponse.json();
+      if (!result.success) throw new Error(result.message);
+      
       posts.value = result.data;
       
       // Reset form
@@ -83,6 +97,21 @@ export default component$(() => {
       imagePreview.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Terjadi kesalahan';
+    }
+  });
+
+  // Handle edit post
+  const handleEdit = $((post: Post) => {
+    editingPost.value = post;
+    title.value = post.title;
+    content.value = post.content;
+    showForm.value = true;
+    
+    // Set preview for existing image
+    if (post.coverImage) {
+      imagePreview.value = `http://localhost:3000${post.coverImage}`;
+    } else {
+      imagePreview.value = null;
     }
   });
 
@@ -209,12 +238,7 @@ export default component$(() => {
                   <p class="text-gray-600 mb-4 line-clamp-2">{post.content}</p>
                   <div class="flex items-center gap-4">
                     <button
-                      onClick$={() => {
-                        editingPost.value = post;
-                        title.value = post.title;
-                        content.value = post.content;
-                        showForm.value = true;
-                      }}
+                      onClick$={() => handleEdit(post)}
                       class="text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       Edit
