@@ -5,9 +5,10 @@ import {
   ServiceWorkerRegister,
 } from "@builder.io/qwik-city";
 import { RouterHead } from "./components/router-head/router-head";
-import { isDev } from "@builder.io/qwik";
 
 import "./global.css";
+import { Navbar } from "./components/navbar/Navbar";
+import { Footer } from "./components/footer/Footer";
 
 export default component$(() => {
   /**
@@ -20,18 +21,17 @@ export default component$(() => {
   return (
     <QwikCityProvider>
       <head>
-        <meta charset="utf-8" />
-        {!isDev && (
-          <link
-            rel="manifest"
-            href={`${import.meta.env.BASE_URL}manifest.json`}
-          />
-        )}
+        <meta charSet="utf-8" />
+        <link rel="manifest" href="/manifest.json" />
         <RouterHead />
+        <ServiceWorkerRegister />
       </head>
-      <body lang="en">
-        <RouterOutlet />
-        {!isDev && <ServiceWorkerRegister />}
+      <body lang="id" class="bg-gray-50">
+        <Navbar />
+        <main class="min-h-screen pt-16">
+          <RouterOutlet />
+        </main>
+        <Footer />
       </body>
     </QwikCityProvider>
   );
