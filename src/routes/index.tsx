@@ -118,27 +118,27 @@ export default component$(() => {
             {posts.value.slice(1).map((post) => (
               <article 
                 key={post.id} 
-                class="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden"
+                class="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col"
               >
-                <div class="aspect-video overflow-hidden">
+                <div class="aspect-[16/9] w-full overflow-hidden relative">
                   <img
                     src={getImageUrl(post.coverImage)}
                     alt={post.title}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    class="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-300"
                     onError$={(e) => {
                       const img = e.target as HTMLImageElement;
                       img.src = FALLBACK_IMAGE;
                     }}
                   />
                 </div>
-                <div class="p-6">
+                <div class="p-6 flex-1 flex flex-col">
                   <h2 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
                     {post.title}
                   </h2>
-                  <p class="text-gray-600 mb-4 line-clamp-3">
+                  <p class="text-gray-600 mb-4 line-clamp-3 flex-1">
                     {post.content}
                   </p>
-                  <div class="flex items-center justify-between text-sm">
+                  <div class="flex items-center justify-between text-sm mt-auto">
                     <span class="text-gray-500">
                       {new Date(post.createdAt).toLocaleDateString('id-ID')}
                     </span>
