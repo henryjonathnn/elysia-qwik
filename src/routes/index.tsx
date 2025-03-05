@@ -18,12 +18,12 @@ export default component$(() => {
     file: null as any
   });
 
-  // Fetch posts from API
+  // Fetch data dari API
   useVisibleTask$(async () => {
     try {
       isLoading.value = true;
-      const response = await fetch('http://localhost:3000/api/posts');
-      if (!response.ok) throw new Error('Failed to fetch posts');
+      const response = await fetch('http://localhost:3000/posts');
+      if (!response.ok) throw new Error('Gagal fetch data!');
       
       const data: ApiResponse = await response.json();
       posts.value = data.data || [];
