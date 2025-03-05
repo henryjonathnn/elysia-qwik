@@ -2,11 +2,23 @@ import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import type { Post, ApiResponse } from "~/types/post";
 
+// Fallback image jika gambar tidak tersedia
+const FALLBACK_IMAGE = "https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image";
+
 export default component$(() => {
   const posts = useSignal<Post[]>([]);
   const isLoading = useSignal(true);
   const error = useSignal<string | null>(null);
   const activeCategory = useSignal<string>("all");
+
+  // Helper function untuk handle image URL
+  const getImageUrl = (imagePath: string | null | undefined) => {
+    if (!imagePath) return FALLBACK_IMAGE;
+    // Jika path dimulai dengan http, gunakan langsung
+    if (imagePath.startsWith('http')) return imagePath;
+    // Jika tidak, tambahkan base URL API
+    return `http://localhost:3000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
 
   // Fetch posts
   useVisibleTask$(async () => {
@@ -39,9 +51,13 @@ export default component$(() => {
         <div class="relative h-[70vh] overflow-hidden">
           <div class="absolute inset-0">
             <img
-              src={posts.value[0].coverImage || "https://via.placeholder.com/1920x1080"}
+              src={getImageUrl(posts.value[0].coverImage)}
               alt={posts.value[0].title}
               class="w-full h-full object-cover"
+              onError$={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.src = FALLBACK_IMAGE;
+              }}
             />
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
           </div>
@@ -106,9 +122,13 @@ export default component$(() => {
               >
                 <div class="aspect-video overflow-hidden">
                   <img
-                    src={post.coverImage || "https://via.placeholder.com/600x400"}
+                    src={getImageUrl(post.coverImage)}
                     alt={post.title}
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError$={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.src = FALLBACK_IMAGE;
+                    }}
                   />
                 </div>
                 <div class="p-6">

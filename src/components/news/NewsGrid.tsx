@@ -1,6 +1,8 @@
 import { component$, useSignal, useVisibleTask$, $ } from "@builder.io/qwik";
 import type { Post, ApiResponse } from "~/types/post";
 
+const FALLBACK_IMAGE = "https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image";
+
 export const NewsGrid = component$(() => {
   const posts = useSignal<Post[]>([]);
   const isLoading = useSignal(true);
@@ -88,6 +90,10 @@ export const NewsGrid = component$(() => {
                       src={post.coverImage ? `http://localhost:3000${post.coverImage}` : "https://via.placeholder.com/400x300"}
                       alt={post.title}
                       class="w-full h-48 object-cover"
+                      onError$={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.src = FALLBACK_IMAGE;
+                      }}
                     />
                   </div>
                   <div class="p-6">
