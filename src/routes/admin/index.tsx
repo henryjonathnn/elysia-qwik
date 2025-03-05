@@ -19,11 +19,13 @@ export default component$(() => {
   // Fetch posts
   useVisibleTask$(async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/posts');
+      const response = await fetch('http://localhost:3000/posts');
       if (!response.ok) throw new Error('Gagal mengambil data');
       
-      const result = await response.json();
-      posts.value = result;
+      const result: ApiResponse<Post[]> = await response.json();
+      if (!result.success) throw new Error(result.message);
+      
+      posts.value = result.data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Terjadi kesalahan';
     } finally {
@@ -55,13 +57,15 @@ export default component$(() => {
       const formData = new FormData();
       formData.append('title', title.value);
       formData.append('content', content.value);
-      if (coverImage.value) {
-        formData.append('coverImage', coverImage.value);
-      }
+
+    if (coverImage.value) {
+      // Use the file name as the key, which matches the backend expectation
+      formData.append('coverImage', coverImage.value, coverImage.value.name);
+    }
 
       const url = editingPost.value 
-        ? `http://localhost:3000/api/posts/${editingPost.value.id}`
-        : 'http://localhost:3000/api/posts';
+        ? `http://localhost:3000/posts/${editingPost.value.id}`
+        : 'http://localhost:3000/posts';
       
       console.log('Submitting form data:', {
         title: title.value,
@@ -80,10 +84,11 @@ export default component$(() => {
       }
       
       // Refresh posts
-      const refreshResponse = await fetch('http://localhost:3000/api/posts');
-      const result = await refreshResponse.json();
+      const refreshResponse = await fetch('http://localhost:3000/posts');
+      const result: ApiResponse<Post[]> = await refreshResponse.json();
+      if (!result.success) throw new Error(result.message);
       
-      posts.value = result;
+      posts.value = result.data;
       
       // Reset form
       showForm.value = false;
@@ -244,7 +249,7 @@ export default component$(() => {
                       onClick$={async () => {
                         if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
                           try {
-                            const response = await fetch(`http://localhost:3000/api/posts/${post.id}`, {
+                            const response = await fetch(`http://localhost:3000/posts/${post.id}`, {
                               method: 'DELETE'
                             });
                             if (!response.ok) throw new Error('Gagal menghapus data');
