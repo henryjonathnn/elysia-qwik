@@ -19,13 +19,11 @@ export default component$(() => {
   // Fetch posts
   useVisibleTask$(async () => {
     try {
-      const response = await fetch('http://localhost:3000/posts');
+      const response = await fetch('http://localhost:3000/api/posts');
       if (!response.ok) throw new Error('Gagal mengambil data');
       
-      const result: ApiResponse<Post[]> = await response.json();
-      if (!result.success) throw new Error(result.message);
-      
-      posts.value = result.data;
+      const result = await response.json();
+      posts.value = result;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Terjadi kesalahan';
     } finally {
@@ -62,8 +60,8 @@ export default component$(() => {
       }
 
       const url = editingPost.value 
-        ? `http://localhost:3000/posts/${editingPost.value.id}`
-        : 'http://localhost:3000/posts';
+        ? `http://localhost:3000/api/posts/${editingPost.value.id}`
+        : 'http://localhost:3000/api/posts';
       
       console.log('Submitting form data:', {
         title: title.value,
@@ -82,11 +80,10 @@ export default component$(() => {
       }
       
       // Refresh posts
-      const refreshResponse = await fetch('http://localhost:3000/posts');
-      const result: ApiResponse<Post[]> = await refreshResponse.json();
-      if (!result.success) throw new Error(result.message);
+      const refreshResponse = await fetch('http://localhost:3000/api/posts');
+      const result = await refreshResponse.json();
       
-      posts.value = result.data;
+      posts.value = result;
       
       // Reset form
       showForm.value = false;
@@ -247,7 +244,7 @@ export default component$(() => {
                       onClick$={async () => {
                         if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
                           try {
-                            const response = await fetch(`http://localhost:3000/posts/${post.id}`, {
+                            const response = await fetch(`http://localhost:3000/api/posts/${post.id}`, {
                               method: 'DELETE'
                             });
                             if (!response.ok) throw new Error('Gagal menghapus data');
